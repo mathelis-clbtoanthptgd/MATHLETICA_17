@@ -218,12 +218,21 @@
     }
 
     .grid-container {
-      position: relative;
-      width: 390px;
-      height: 310px;
-      margin: 20px 0;
+      position: relative; /* Để làm mốc tọa độ cho các ô con */
+  width: 400px;       /* Chiều rộng khớp với tọa độ grid */
+  height: 420px;      /* QUAN TRỌNG: Giữ khoảng trống chiều cao để không che luật chơi */
+  margin: 20px auto;  /* Căn giữa và tạo khoảng cách trên dưới */
+  
+  /* Nếu trên điện thoại màn hình nhỏ quá thì thu nhỏ lưới lại */
+  transform-origin: top center;
     }
-
+@media (max-width: 420px) {
+  #grid-container {
+    transform: scale(0.85); /* Thu nhỏ lưới xuống 85% */
+    height: 360px;          /* Giảm chiều cao giữ chỗ tương ứng */
+    margin-bottom: 0px;
+  }
+}
     .grid-cell {
       position: absolute;
       width: 50px;
@@ -1177,6 +1186,7 @@
  <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9acf3befa5da09a0',t:'MTc2NTU2MzYwOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 
 </html>
+
 
 
 

@@ -1,0 +1,1161 @@
+<!doctype html>
+<html lang="vi">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pattern of Coins</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <script src="/_sdk/data_sdk.js"></script>
+  <style>
+    html, body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      background: linear-gradient(135deg, #4E342E 0%, #2C1810 100%);
+      color: #FFFDD0;
+      overflow-x: hidden;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    .main-wrapper {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .screen {
+      display: none;
+      width: 100%;
+      max-width: 1200px;
+      animation: fadeIn 0.5s ease-in;
+    }
+
+    .screen.active {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    @keyframes spin {
+      from { transform: rotateY(0deg); }
+      to { transform: rotateY(360deg); }
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0); opacity: 0; }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-10px); }
+      75% { transform: translateX(10px); }
+    }
+
+    @keyframes confetti {
+      0% { transform: translateY(-100%) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100%) rotate(720deg); opacity: 0; }
+    }
+
+    .title {
+      font-size: 3em;
+      font-weight: bold;
+      color: #FFD700;
+      text-align: center;
+      margin-bottom: 10px;
+      text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
+      letter-spacing: 3px;
+    }
+
+    .subtitle {
+      font-size: 1.2em;
+      color: #C0C0C0;
+      text-align: center;
+      margin-bottom: 30px;
+      font-style: italic;
+    }
+
+    .coin-icon {
+      width: 120px;
+      height: 120px;
+      margin: 20px 0;
+      animation: spin 3s linear infinite;
+    }
+
+    .input-box {
+      width: 100%;
+      max-width: 400px;
+      padding: 15px;
+      font-size: 1.1em;
+      border: 3px solid #FFD700;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #FFFDD0;
+      text-align: center;
+      margin: 20px 0;
+      font-family: 'Arial', 'Helvetica', sans-serif;
+    }
+
+    .input-box::placeholder {
+      color: rgba(255, 253, 208, 0.5);
+    }
+
+    .btn {
+      padding: 15px 40px;
+      font-size: 1.2em;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Arial', 'Helvetica', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn-silver {
+      background: linear-gradient(135deg, #C0C0C0 0%, #808080 100%);
+      color: #1B1B1B;
+      animation: pulse 2s infinite;
+    }
+
+    .btn-silver:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 20px rgba(192, 192, 192, 0.5);
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+      color: #1B1B1B;
+    }
+
+    .btn-gold:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 20px rgba(255, 215, 0, 0.5);
+    }
+
+    .btn-gold:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      animation: none;
+    }
+
+    /* Game Screen */
+    .game-container {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .game-header {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      border: 2px solid #FFD700;
+    }
+
+    .player-info {
+      font-size: 1.5em;
+      color: #FFD700;
+      font-weight: bold;
+    }
+
+    .timer {
+      font-size: 2em;
+      color: #C0C0C0;
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
+      text-shadow: 0 0 10px rgba(192, 192, 192, 0.5);
+    }
+
+    .game-content {
+      display: flex;
+      gap: 30px;
+      width: 100%;
+      justify-content: center;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .grid-section {
+      flex: 1;
+      min-width: 400px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .grid-container {
+      position: relative;
+      width: 400px;
+      height: 320px;
+      margin: 20px 0;
+    }
+
+    .grid-cell {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 3px solid #C0C0C0;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      z-index: 2;
+    }
+
+    .grid-cell:hover {
+      background: rgba(255, 215, 0, 0.2);
+      border-color: #FFD700;
+    }
+
+    .grid-cell input {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: transparent;
+      color: #FFD700;
+      font-size: 1.3em;
+      font-weight: bold;
+      text-align: center;
+      font-family: 'Arial', 'Helvetica', sans-serif;
+    }
+
+    .grid-cell input:focus {
+      outline: none;
+      background: rgba(255, 215, 0, 0.15);
+    }
+
+    .grid-line {
+      position: absolute;
+      background: #C0C0C0;
+      opacity: 0.6;
+      z-index: 1;
+    }
+
+    .inventory-section {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 25px;
+      border-radius: 10px;
+      border: 2px solid #FFD700;
+      min-width: 250px;
+    }
+
+    .inventory-title {
+      font-size: 1.5em;
+      color: #FFD700;
+      margin-bottom: 20px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .inventory-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      margin: 10px 0;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      border-left: 4px solid #FFD700;
+    }
+
+.rules-section {
+      background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(192, 192, 192, 0.1) 100%);
+      padding: 25px;
+      border-radius: 15px;
+      border: 3px solid #FFD700;
+      box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+      min-width: 250px;
+      max-width: 450px;
+    }
+
+    .rules-title {
+      font-size: 1.5em;
+      color: #FFD700;
+      margin-bottom: 20px;
+      text-align: center;
+      font-weight: bold;
+      text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    }
+
+    .rules-content {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .rule-item {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      border-left: 4px solid #FFD700;
+      transition: all 0.3s ease;
+    }
+
+    .rule-item:hover {
+      background: rgba(255, 215, 0, 0.15);
+      transform: translateX(5px);
+    }
+
+    .rule-icon {
+      font-size: 1.8em;
+      min-width: 40px;
+      text-align: center;
+    }
+
+    .rule-text {
+      color: #FFFDD0;
+      line-height: 1.6;
+      font-size: 0.95em;
+    }
+
+    .rule-text strong {
+      color: #FFD700;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .coin-value {
+      font-size: 1.3em;
+      color: #FFD700;
+      font-weight: bold;
+    }
+
+    .coin-count {
+      font-size: 1.2em;
+      color: #C0C0C0;
+    }
+
+    .game-controls {
+      margin-top: 100px;
+      display: flex;
+      gap: 20px;
+    }
+
+    /* Modal/Popup */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+      animation: fadeIn 0.3s ease-in;
+    }
+
+    .modal-content {
+      background: linear-gradient(135deg, #4E342E 0%, #2C1810 100%);
+      padding: 40px;
+      border-radius: 20px;
+      border: 5px solid #FFD700;
+      max-width: 600px;
+      width: 90%;
+      text-align: center;
+      animation: pop 0.5s ease-out;
+      position: relative;
+      box-shadow: 0 0 50px rgba(255, 215, 0, 0.5);
+    }
+
+    .modal-title {
+      font-size: 3em;
+      color: #FFD700;
+      margin-bottom: 20px;
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+      animation: pulse 1.5s infinite;
+    }
+
+    .modal-message {
+      font-size: 1.3em;
+      color: #FFFDD0;
+      margin: 20px 0;
+      line-height: 1.6;
+    }
+
+    .modal-time {
+      font-size: 2em;
+      color: #C0C0C0;
+      margin: 20px 0;
+      font-weight: bold;
+    }
+
+    .solution-grid {
+      display: inline-block;
+      margin: 20px 0;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+    }
+
+    .confetti-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 999;
+    }
+
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      animation: confetti 3s linear;
+    }
+
+    .error-modal .modal-content {
+      border-color: #F44336;
+      box-shadow: 0 0 50px rgba(244, 67, 54, 0.5);
+    }
+
+    .error-modal .modal-title {
+      color: #F44336;
+      text-shadow: 0 0 20px rgba(244, 67, 54, 0.8);
+    }
+
+    
+
+    @media (max-width: 768px) {
+      .title {
+        font-size: 2em;
+      }
+
+      .subtitle {
+        font-size: 1em;
+      }
+
+      .game-content {
+        flex-direction: column;
+      }
+
+      .grid-container {
+        transform: scale(0.8);
+      }
+
+      .game-header {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .modal-content {
+        padding: 20px;
+      }
+
+      .modal-title {
+        font-size: 2em;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <div class="main-wrapper"><!-- Screen 1: Welcome -->
+   <div id="screen-welcome" class="screen active">
+    <h1 class="title" id="game-title">PATTERN OF COINS</h1>
+    <p class="subtitle" id="game-subtitle">Mathletica: Đố vui không thưởng #17</p>
+    <svg class="coin-icon" viewbox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><ellipse cx="50" cy="50" rx="45" ry="45" fill="#FFD700" stroke="#FFA500" stroke-width="3" /> <ellipse cx="50" cy="50" rx="35" ry="35" fill="none" stroke="#FFA500" stroke-width="2" /> <text x="50" y="60" text-anchor="middle" font-size="30" font-weight="bold" fill="#FFA500">
+      ₽
+     </text>
+    </svg><input type="text" id="player-name-input" class="input-box" placeholder="Nhập tên người chơi..." maxlength="30"> <button id="start-btn" class="btn btn-silver">BẮT ĐẦU XẾP TIỀN</button>
+   </div><!-- Screen 2: Game -->
+   <div id="screen-game" class="screen">
+    <div class="game-container">
+     <div class="game-header">
+      <div class="player-info">
+       Người chơi: <span id="player-name-display"></span>
+      </div>
+      <div class="timer" id="timer">
+       00:00
+      </div>
+     </div>
+     <div class="game-content">
+      <div class="grid-section">
+       <div class="grid-container" id="grid-container"><!-- Grid will be generated by JavaScript -->
+       </div>
+       <div class="game-controls"><button id="check-btn" class="btn btn-gold">XÁC NHẬN KẾT QUẢ</button>
+       </div>
+      </div>
+      <div class="inventory-section">
+       <div class="inventory-title" id="inventory-title">
+        Kho Tiền
+       </div>
+       <div class="inventory-item"><span class="coin-value">20₽</span> <span class="coin-count" id="count-20">0/5</span>
+       </div>
+       <div class="inventory-item"><span class="coin-value">15₽</span> <span class="coin-count" id="count-15">0/3</span>
+       </div>
+       <div class="inventory-item"><span class="coin-value">10₽</span> <span class="coin-count" id="count-10">0/3</span>
+       </div>
+       <div class="inventory-item"><span class="coin-value">5₽</span> <span class="coin-count" id="count-5">0/6</span>
+       </div>
+      </div>
+<div class="rules-section">
+        <div class="rules-title">
+         📜 LUẬT CHƠI
+        </div>
+        <div class="rules-content">
+         <div class="rule-item">
+          <div class="rule-icon">
+           🎯
+          </div>
+          <div class="rule-text"><strong>Mục tiêu:</strong> Sắp xếp tất cả 17 đồng xu vào 17 ô vuông trống trên sơ đồ.
+          </div>
+         </div>
+         <div class="rule-item">
+          <div class="rule-icon">
+           🪙
+          </div>
+          <div class="rule-text"><strong>Mỗi ô một đồng:</strong> Mỗi ô vuông chỉ được chứa duy nhất 1 đồng xu.
+          </div>
+         </div>
+         <div class="rule-item">
+          <div class="rule-icon">
+           ➕
+          </div>
+          <div class="rule-text"><strong>Tổng bằng nhau:</strong> Tổng giá trị các đồng xu trên mọi đường thẳng (ngang, dọc, chéo) đều phải bằng nhau.
+          </div>
+         </div>
+         <div class="rule-item">
+          <div class="rule-icon">
+           🔢
+          </div>
+          <div class="rule-text"><strong>Con số bí ẩn:</strong> Tổng số cần đạt được trên mỗi dòng là <span style="color: #FFD700; font-size: 1.2em; font-weight: bold;">55 kopeks</span>.
+          </div>
+     </div>
+    </div>
+   </div><!-- Screen 3: Results -->
+   <div id="screen-results" class="screen">
+    </div><button id="play-again-btn" class="btn btn-silver">🔄 CHƠI LẠI 🎮</button>
+   </div>
+  </div><!-- Success Modal -->
+  <div id="success-modal" class="modal-overlay">
+   <div class="modal-content" style="max-width: 800px; max-height: 90%; overflow-y: auto;">
+    <h2 class="modal-title" id="success-title">🏆 XUẤT SẮC! BẠN LÀ TỶ PHÚ TOÁN HỌC! 💰</h2>
+    <div class="modal-message">
+     <div>
+      🎯 Người chơi: <strong><span id="modal-player-name"></span></strong>
+     </div>
+     <div class="modal-time">
+      ⏱️ Thời gian: <span id="modal-time"></span>
+     </div>
+    </div>
+    <div class="solution-grid" id="solution-display"></div><button id="view-logic-btn" class="btn btn-gold" style="margin: 10px;">🔐 XEM LÝ GIẢI LOGIC 🔑</button>    </div>
+  </div><!-- Logic Explanation Modal -->
+  <div id="logic-modal" class="modal-overlay">
+   <div class="modal-content" style="max-width: 900px; max-height: 90%; overflow-y: auto; text-align: left;">
+    <h2 class="modal-title" style="text-align: center;">🔐 BÍ MẬT CỦA KHO BẠC</h2>
+    <div style="padding: 20px; line-height: 1.8;">
+     <h3 style="color: #FFD700; margin-top: 20px; font-size: 1.5em;">1. Tại sao Ô TRUNG TÂM phải là 20?</h3>
+     <p style="color: #FFFDD0; margin: 15px 0;">Ô ở giữa là <strong style="color: #FFD700;">"giao lộ"</strong> bận rộn nhất, nơi 4 đường thẳng (dọc, ngang, 2 chéo) đều đi qua. Để tổng các hàng đạt tới con số lớn là <strong style="color: #FFD700;">55</strong>, chúng ta cần một <strong style="color: #FFD700;">"trụ cột"</strong> vững chắc nhất tại đây.</p>
+     <p style="color: #FFFDD0; margin: 15px 0;">Nếu đặt số nhỏ (như 5), các ô xung quanh phải gánh áp lực quá lớn để bù lại, và kho tiền của chúng ta không đủ số lớn để làm điều đó.</p>
+     <p style="color: #FFD700; margin: 15px 0; font-weight: bold;">→ Đồng xu lớn nhất (20) bắt buộc phải nằm ở tâm.</p>
+     <h3 style="color: #FFD700; margin-top: 30px; font-size: 1.5em;">2. Chiến thuật "Bù Trừ Đối Xứng"</h3>
+     <p style="color: #FFFDD0; margin: 15px 0;">Sau khi đặt 20 vào giữa, mỗi đường thẳng đi qua tâm còn thiếu <strong style="color: #FFD700;">55 - 20 = 35</strong> đơn vị.</p>
+     <p style="color: #FFFDD0; margin: 15px 0;">Để cân bằng, ta dùng nguyên tắc <strong style="color: #FFD700;">"Lớn đi với Bé"</strong>: Nếu một đầu đường chéo đặt số lớn (ví dụ 15), thì đầu kia phải là số nhỏ (ví dụ 5) để trung hòa.</p>
+     <h3 style="color: #FFD700; margin-top: 30px; font-size: 1.5em;">3. Nghệ thuật sắp đặt</h3>
+     <p style="color: #FFFDD0; margin: 15px 0;">Quan sát kho tiền: Ta có tới <strong style="color: #FFD700;">6 đồng xu 5</strong>. Đây là những <strong style="color: #FFD700;">"viên gạch lót đường"</strong>.</p>
+     <p style="color: #FFFDD0; margin: 15px 0;">Hãy rải chúng vào vòng trong (quanh số 20) để tạo không gian cho các số lớn (10, 15) tỏa sáng ở vòng ngoài.</p>
+     <div style="background: rgba(255, 215, 0, 0.1); padding: 20px; border-radius: 10px; margin-top: 30px; border: 2px solid #FFD700;">
+      <h4 style="color: #FFD700; margin-top: 0; text-align: center;">🎯 LỜI GIẢI MẪU</h4>
+      <div id="solution-display-logic" style="text-align: center; margin: 20px 0;"></div>
+      <p style="color: #C0C0C0; text-align: center; margin: 10px 0; font-style: italic;">Trung tâm: 20 | Vòng 1: 5, 5, 5, 5 | Vòng ngoài: 10, 15, 20 phân bổ cân đối</p>
+     </div>
+    </div><button id="logic-close-btn" class="btn btn-gold" style="margin-top: 20px;">QUAY LẠI</button>
+   </div>
+  </div><!-- Error Modal -->
+  <div id="error-modal" class="modal-overlay error-modal">
+   <div class="modal-content">
+    <h2 class="modal-title" id="error-title">CHƯA CHÍNH XÁC</h2>
+    <div class="modal-message" id="error-message">
+     Tổng các hàng chưa cân bằng. Hãy thử lại!
+    </div>
+    <div style="background: rgba(255, 215, 0, 0.1); padding: 20px; border-radius: 10px; margin: 20px 0; border: 2px solid #FFD700;">
+     <p style="color: #FFFDD0; font-size: 1.1em; line-height: 1.6; margin: 0;">💡 <strong style="color: #FFD700;">Mẹo:</strong> Ô trung tâm chịu áp lực từ mọi phía, nó cần là một <strong style="color: #FFD700;">trụ cột vững chắc nhất</strong>!</p>
+    </div><button id="error-close-btn" class="btn btn-gold">THỬ LẠI</button>
+   </div>
+  </div>
+  <div class="confetti-container" id="confetti-container"></div>
+  <script>
+    const defaultConfig = {
+      game_title: "PATTERN OF COINS",
+      game_subtitle: "Mathletica: Đố vui không thưởng #17",
+      start_button_text: "BẮT ĐẦU XẾP TIỀN",
+      check_button_text: "XÁC NHẬN KẾT QUẢ",
+      player_input_label: "Nhập tên người chơi...",
+      success_title: "XUẤT SẮC!",
+      error_title: "CHƯA CHÍNH XÁC",
+      background_color: "#4E342E",
+      surface_color: "#1B5E20",
+      text_color: "#FFFDD0",
+      primary_color: "#FFD700",
+      secondary_color: "#C0C0C0",
+      font_family: "Arial",
+      font_size: 16
+    };
+
+    // Grid positions (17 cells)
+    const gridPositions = [
+      // Row 1 (3 cells)
+      { id: 1, x: 0, y: 0 },
+      { id: 2, x: 180, y: 0 },
+      { id: 3, x: 360, y: 0 },
+      // Row 2 (3 cells)
+      { id: 4, x: 90, y: 90 },
+      { id: 5, x: 180, y: 90 },
+      { id: 6, x: 270, y: 90 },
+      // Row 3 (5 cells)
+      { id: 7, x: 0, y: 180 },
+      { id: 8, x: 90, y: 180 },
+      { id: 9, x: 180, y: 180 },
+      { id: 10, x: 270, y: 180 },
+      { id: 11, x: 360, y: 180 },
+      // Row 4 (3 cells)
+      { id: 12, x: 90, y: 270 },
+      { id: 13, x: 180, y: 270 },
+      { id: 14, x: 270, y: 270 },
+      // Row 5 (3 cells)
+      { id: 15, x: 0, y: 360 },
+      { id: 16, x: 180, y: 360 },
+      { id: 17, x: 360, y: 360 },
+    ];
+
+    // Lines connecting cells (all straight lines in the grid)
+    const lines = [
+      // All straight lines that sum to 55
+      [1, 2, 3],           // Top horizontal
+      [7, 8, 9, 10, 11],       // Third horizontal
+      [15, 16, 17],    // Bottom horizontal 
+      [1, 4, 9, 14, 17],   // Left diagonal down
+      [2, 5, 9, 13, 16],   // Center diagonal down
+      [3, 6, 9, 12, 15],  // Right diagonal down
+      [1, 7, 15],          // Left-center vertical
+      [3, 11, 17],             // Right-center short vertical
+         ];
+
+    let currentScreen = 'welcome';
+    let playerName = '';
+    let gameStartTime = 0;
+    let timerInterval = null;
+    let cellValues = {};
+    let allRecords = [];
+
+    async function onConfigChange(config) {
+      const baseSize = config.font_size || defaultConfig.font_size;
+      const customFont = config.font_family || defaultConfig.font_family;
+      const baseFontStack = 'Helvetica, sans-serif';
+      
+      document.body.style.fontFamily = `${customFont}, ${baseFontStack}`;
+      document.body.style.fontSize = `${baseSize}px`;
+      document.body.style.background = `linear-gradient(135deg, ${config.background_color || defaultConfig.background_color} 0%, ${config.surface_color || defaultConfig.surface_color} 100%)`;
+      document.body.style.color = config.text_color || defaultConfig.text_color;
+
+      const titles = document.querySelectorAll('.title');
+      titles.forEach(title => {
+        title.style.fontFamily = `${customFont}, ${baseFontStack}`;
+        title.style.fontSize = `${baseSize * 1.875}px`;
+        title.style.color = config.primary_color || defaultConfig.primary_color;
+      });
+
+      const subtitles = document.querySelectorAll('.subtitle');
+      subtitles.forEach(subtitle => {
+        subtitle.style.fontFamily = `${customFont}, ${baseFontStack}`;
+        subtitle.style.fontSize = `${baseSize * 1.25}px`;
+        subtitle.style.color = config.secondary_color || defaultConfig.secondary_color;
+      });
+
+      document.getElementById('game-title').textContent = `🪙 ${config.game_title || defaultConfig.game_title} ✨`;
+      document.getElementById('game-subtitle').textContent = `💰 ${config.game_subtitle || defaultConfig.game_subtitle} 💎`;
+      document.getElementById('start-btn').textContent = `💸 ${config.start_button_text || defaultConfig.start_button_text} 💸`;
+      document.getElementById('check-btn').textContent = `💎 ${config.check_button_text || defaultConfig.check_button_text} 💎`;
+      document.getElementById('player-name-input').placeholder = config.player_input_label || defaultConfig.player_input_label;
+      document.getElementById('success-title').textContent = config.success_title || defaultConfig.success_title;
+      document.getElementById('error-title').textContent = config.error_title || defaultConfig.error_title;
+
+      const buttons = document.querySelectorAll('.btn');
+      buttons.forEach(btn => {
+        btn.style.fontFamily = `${customFont}, ${baseFontStack}`;
+        btn.style.fontSize = `${baseSize * 1.25}px`;
+      });
+
+      const inputBoxes = document.querySelectorAll('.input-box');
+      inputBoxes.forEach(input => {
+        input.style.fontFamily = `${customFont}, ${baseFontStack}`;
+        input.style.fontSize = `${baseSize * 1.0625}px`;
+        input.style.borderColor = config.primary_color || defaultConfig.primary_color;
+        input.style.color = config.text_color || defaultConfig.text_color;
+      });
+
+      const gridCells = document.querySelectorAll('.grid-cell');
+      gridCells.forEach(cell => {
+        cell.style.borderColor = config.secondary_color || defaultConfig.secondary_color;
+      });
+
+      const cellInputs = document.querySelectorAll('.grid-cell input');
+      cellInputs.forEach(input => {
+        input.style.color = config.primary_color || defaultConfig.primary_color;
+      });
+    }
+
+    function showScreen(screenName) {
+      document.querySelectorAll('.screen').forEach(screen => {
+        screen.classList.remove('active');
+      });
+      document.getElementById(`screen-${screenName}`).classList.add('active');
+      currentScreen = screenName;
+    }
+
+    function showModal(modalId) {
+      document.getElementById(modalId).classList.add('active');
+    }
+
+    function hideModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    }
+
+    function createConfetti() {
+      const container = document.getElementById('confetti-container');
+      container.innerHTML = '';
+      const colors = ['#FFD700', '#FFA500', '#FF6B6B', '#4ECDC4', '#95E1D3'];
+      
+      for (let i = 0; i < 50; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDelay = Math.random() * 3 + 's';
+        container.appendChild(confetti);
+      }
+
+      setTimeout(() => {
+        container.innerHTML = '';
+      }, 4000);
+    }
+
+    function createGrid() {
+      const container = document.getElementById('grid-container');
+      container.innerHTML = '';
+
+      // Create all cells
+      gridPositions.forEach(pos => {
+        const cell = document.createElement('div');
+        cell.className = 'grid-cell';
+        cell.style.left = pos.x + 'px';
+        cell.style.top = pos.y + 'px';
+        
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.maxLength = 2;
+        input.dataset.cellId = pos.id;
+        input.addEventListener('input', handleCellInput);
+        
+        cell.appendChild(input);
+        container.appendChild(cell);
+      });
+
+      // Draw connection lines
+      drawLines();
+    }
+
+    function drawLines() {
+      const container = document.getElementById('grid-container');
+      
+      lines.forEach(line => {
+        for (let i = 0; i < line.length - 1; i++) {
+          const cell1 = gridPositions.find(p => p.id === line[i]);
+          const cell2 = gridPositions.find(p => p.id === line[i + 1]);
+          
+          const x1 = cell1.x + 25;
+          const y1 = cell1.y + 25;
+          const x2 = cell2.x + 25;
+          const y2 = cell2.y + 25;
+          
+          const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+          const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+          
+          const lineDiv = document.createElement('div');
+          lineDiv.className = 'grid-line';
+          lineDiv.style.width = length + 'px';
+          lineDiv.style.height = '3px';
+          lineDiv.style.left = x1 + 'px';
+          lineDiv.style.top = y1 + 'px';
+          lineDiv.style.transform = `rotate(${angle}deg)`;
+          lineDiv.style.transformOrigin = '0 0';
+          
+          container.appendChild(lineDiv);
+        }
+      });
+    }
+
+    function handleCellInput(e) {
+      const input = e.target;
+      input.value = input.value.replace(/[^0-9]/g, '');
+      
+      const cellId = parseInt(input.dataset.cellId);
+      const value = input.value ? parseInt(input.value) : 0;
+      cellValues[cellId] = value;
+      
+      updateInventory();
+    }
+
+    function updateInventory() {
+      const counts = { 20: 0, 15: 0, 10: 0, 5: 0 };
+      
+      Object.values(cellValues).forEach(val => {
+        if (counts.hasOwnProperty(val)) {
+          counts[val]++;
+        }
+      });
+
+      document.getElementById('count-20').textContent = `${counts[20]}/5`;
+      document.getElementById('count-15').textContent = `${counts[15]}/3`;
+      document.getElementById('count-10').textContent = `${counts[10]}/3`;
+      document.getElementById('count-5').textContent = `${counts[5]}/6`;
+    }
+
+    function startTimer() {
+      gameStartTime = Date.now();
+      timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+        const seconds = (elapsed % 60).toString().padStart(2, '0');
+        document.getElementById('timer').textContent = `${minutes}:${seconds}`;
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function getElapsedTime() {
+      return Math.floor((Date.now() - gameStartTime) / 1000);
+    }
+
+    function formatTime(seconds) {
+      const minutes = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+
+    function checkSolution() {
+      // Check if all cells are filled
+      if (Object.keys(cellValues).length !== 17) {
+        showErrorModal('Vui lòng điền đầy đủ tất cả các ô!');
+        return;
+      }
+
+      // Check coin inventory
+      const counts = { 20: 0, 15: 0, 10: 0, 5: 0 };
+      Object.values(cellValues).forEach(val => {
+        if (counts.hasOwnProperty(val)) {
+          counts[val]++;
+        } else {
+          showErrorModal('Chỉ được sử dụng các loại xu: 20, 15, 10, 5!');
+          return;
+        }
+      });
+
+      if (counts[20] !== 5 || counts[15] !== 3 || counts[10] !== 3 || counts[5] !== 6) {
+        showErrorModal('Số lượng mỗi loại xu không đúng: 5 đồng 20 | 3 đồng 15 | 3 đồng 10 | 6 đồng 5');
+        return;
+      }
+
+      // Check all lines sum to 55
+      let allCorrect = true;
+      let errorLines = [];
+
+      lines.forEach((line, index) => {
+        const sum = line.reduce((total, cellId) => total + (cellValues[cellId] || 0), 0);
+        if (sum !== 55) {
+          allCorrect = false;
+          errorLines.push(index + 1);
+        }
+      });
+
+      if (allCorrect) {
+        stopTimer();
+        const timeTaken = getElapsedTime();
+        showSuccessModal(timeTaken);
+      } else {
+        showErrorModal(`Tổng các hàng chưa cân bằng. Hãy kiểm tra lại!`);
+      }
+    }
+
+    // Sample solution for display
+    const solutionValues = {
+      1: 15, 2: 20, 3: 20,
+      4: 10, 5: 20, 6: 25,
+      7: 5, 8: 20, 9: 20, 10: 10,
+      11: 15, 12: 20, 13: 20,
+      14: 5, 15: 20, 16: 20, 17: 10
+    };
+
+    function createSolutionDisplay(containerId) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      
+      const miniGrid = document.createElement('div');
+      miniGrid.style.position = 'relative';
+      miniGrid.style.width = '300px';
+      miniGrid.style.height = '300px';
+      miniGrid.style.margin = '0 auto';
+      
+      // Create mini cells with solution
+      gridPositions.forEach(pos => {
+        const cell = document.createElement('div');
+        cell.style.position = 'absolute';
+        cell.style.width = '38px';
+        cell.style.height = '38px';
+        cell.style.left = (pos.x * 0.75) + 'px';
+        cell.style.top = (pos.y * 0.75) + 'px';
+        cell.style.background = 'rgba(255, 215, 0, 0.2)';
+        cell.style.border = '2px solid #FFD700';
+        cell.style.borderRadius = '5px';
+        cell.style.display = 'flex';
+        cell.style.alignItems = 'center';
+        cell.style.justifyContent = 'center';
+        cell.style.color = '#FFD700';
+        cell.style.fontWeight = 'bold';
+        cell.style.fontSize = '1.1em';
+        cell.textContent = solutionValues[pos.id];
+        miniGrid.appendChild(cell);
+      });
+      
+      container.appendChild(miniGrid);
+    }
+
+    function showSuccessModal(timeTaken) {
+      createConfetti();
+      document.getElementById('modal-player-name').textContent = playerName;
+      document.getElementById('modal-time').textContent = formatTime(timeTaken);
+      createSolutionDisplay('solution-display');
+      showModal('success-modal');
+      
+      // Save to database
+      saveResult(timeTaken);
+    }
+
+    function showErrorModal(message) {
+      document.getElementById('error-message').textContent = message;
+      showModal('error-modal');
+    }
+
+    async function saveResult(timeTaken) {
+      const result = await window.dataSdk.create({
+        id: Date.now().toString(),
+        player_name: playerName,
+        time_taken: timeTaken,
+        completed_at: new Date().toISOString()
+      });
+
+      if (!result.isOk) {
+        console.error('Failed to save result');
+      }
+    }
+
+    function renderLeaderboard(data) {
+      allRecords = data;
+      const sortedData = [...data].sort((a, b) => a.time_taken - b.time_taken).slice(0, 10);
+      const leaderboardList = document.getElementById('leaderboard-list');
+      
+      if (sortedData.length === 0) {
+        leaderboardList.innerHTML = '<div style="text-align: center; color: #C0C0C0;">Chưa có người chơi nào</div>';
+        return;
+      }
+
+      leaderboardList.innerHTML = sortedData.map((item, index) => `
+        <div class="leaderboard-item">
+          <span class="rank">#${index + 1}</span>
+          <span>${item.player_name}</span>
+          <span style="color: #FFD700; font-weight: bold;">${formatTime(item.time_taken)}</span>
+        </div>
+      `).join('');
+    }
+
+    const dataHandler = {
+      onDataChanged(data) {
+        renderLeaderboard(data);
+      }
+    };
+
+    // Event Listeners
+    document.getElementById('start-btn').addEventListener('click', () => {
+      const nameInput = document.getElementById('player-name-input').value.trim();
+      
+      if (!nameInput) {
+        const input = document.getElementById('player-name-input');
+        input.style.borderColor = '#F44336';
+        setTimeout(() => {
+          input.style.borderColor = '#FFD700';
+        }, 1000);
+        return;
+      }
+
+      playerName = nameInput;
+      document.getElementById('player-name-display').textContent = playerName;
+      cellValues = {};
+      createGrid();
+      updateInventory();
+      startTimer();
+      showScreen('game');
+    });
+
+    document.getElementById('check-btn').addEventListener('click', () => {
+      checkSolution();
+    });
+
+    document.getElementById('view-logic-btn').addEventListener('click', () => {
+      createSolutionDisplay('solution-display-logic');
+      hideModal('success-modal');
+      showModal('logic-modal');
+    });
+
+    document.getElementById('logic-close-btn').addEventListener('click', () => {
+      hideModal('logic-modal');
+      showModal('success-modal');
+    });
+
+    document.getElementById('success-continue-btn').addEventListener('click', () => {
+      hideModal('success-modal');
+      hideModal('logic-modal');
+      showScreen('results');
+    });
+
+    document.getElementById('error-close-btn').addEventListener('click', () => {
+      hideModal('error-modal');
+    });
+
+    document.getElementById('play-again-btn').addEventListener('click', () => {
+      document.getElementById('player-name-input').value = '';
+      playerName = '';
+      cellValues = {};
+      stopTimer();
+      showScreen('welcome');
+    });
+
+    async function initialize() {
+      await window.elementSdk.init({
+        defaultConfig,
+        onConfigChange,
+        mapToCapabilities: (config) => ({
+          recolorables: [
+            {
+              get: () => config.background_color || defaultConfig.background_color,
+              set: (value) => {
+                window.elementSdk.config.background_color = value;
+                window.elementSdk.setConfig({ background_color: value });
+              }
+            },
+            {
+              get: () => config.surface_color || defaultConfig.surface_color,
+              set: (value) => {
+                window.elementSdk.config.surface_color = value;
+                window.elementSdk.setConfig({ surface_color: value });
+              }
+            },
+            {
+              get: () => config.text_color || defaultConfig.text_color,
+              set: (value) => {
+                window.elementSdk.config.text_color = value;
+                window.elementSdk.setConfig({ text_color: value });
+              }
+            },
+            {
+              get: () => config.primary_color || defaultConfig.primary_color,
+              set: (value) => {
+                window.elementSdk.config.primary_color = value;
+                window.elementSdk.setConfig({ primary_color: value });
+              }
+            },
+            {
+              get: () => config.secondary_color || defaultConfig.secondary_color,
+              set: (value) => {
+                window.elementSdk.config.secondary_color = value;
+                window.elementSdk.setConfig({ secondary_color: value });
+              }
+            }
+          ],
+          borderables: [],
+          fontEditable: {
+            get: () => config.font_family || defaultConfig.font_family,
+            set: (value) => {
+              window.elementSdk.config.font_family = value;
+              window.elementSdk.setConfig({ font_family: value });
+            }
+          },
+          fontSizeable: {
+            get: () => config.font_size || defaultConfig.font_size,
+            set: (value) => {
+              window.elementSdk.config.font_size = value;
+              window.elementSdk.setConfig({ font_size: value });
+            }
+          }
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ["game_title", config.game_title || defaultConfig.game_title],
+          ["game_subtitle", config.game_subtitle || defaultConfig.game_subtitle],
+          ["start_button_text", config.start_button_text || defaultConfig.start_button_text],
+          ["check_button_text", config.check_button_text || defaultConfig.check_button_text],
+          ["player_input_label", config.player_input_label || defaultConfig.player_input_label],
+          ["success_title", config.success_title || defaultConfig.success_title],
+          ["error_title", config.error_title || defaultConfig.error_title]
+        ])
+      });
+
+      const initResult = await window.dataSdk.init(dataHandler);
+      if (!initResult.isOk) {
+        console.error('Failed to initialize data SDK');
+      }
+    }
+
+    initialize();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9acf3befa5da09a0',t:'MTc2NTU2MzYwOS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
